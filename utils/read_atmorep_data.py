@@ -6,8 +6,9 @@ import zarr
 import numpy as np
 import xarray as xr
 from pathlib import Path
+from itertools import product
 
-class HandleAtmoRepData(object):
+class HandleAtmoRepData:
     """
     Handle outout data of AtmoRep.
     TODO:
@@ -26,8 +27,8 @@ class HandleAtmoRepData(object):
         
         self.target_type = "fields_prediction" if self.config["BERT_strategy"] in ["forecast", "BERT"] else "fields_targets"
         
-        self.input_variables = self._get_invars()
-        self.target_variables = self._get_tarvars()
+        self.input_variables = self._extract_varnames_from_fields("fields")
+        self.target_variables = self._extract_varnames_from_fields(self.target_type)
         
         self.input_token_config = self.get_input_token_config()
         self.target_token_config = self.get_target_token_config() 
@@ -38,8 +39,8 @@ class HandleAtmoRepData(object):
     
     @results_dir.setter
     def results_dir(self, results_basedir):
-        results_dir = Path(os.path.join(results_basedir, self.model_id))
-        config_file =  results_dir.joinpath(f"model_{self.model_id}.json")
+        results_dir = Path(results_basedir) / self.model_id
+        config_file =  results_dir / f"model_{self.model_id}.json"
         zarr_files = list(results_dir.glob('*.zarr'))
         
         # basic checks: directory existence, availability of config-file and zarr-files
@@ -59,35 +60,36 @@ class HandleAtmoRepData(object):
         """
         Get configuration dictionary of trained AtmoRep-model.
         """
-        config_jsf = self.results_dir.joinpath(f"model_{self.model_id}.json")  #os.path.join(self.datadir, f"model_{self.model_id}.json")
+        config_jsf = self.results_dir / f"model_{self.model_id}.json"
         with open(config_jsf) as json_file:
             config = json.load(json_file)
         return config_jsf, config
     
-    def _get_invars(self) -> List:
+    def _extract_varnames_from_fields(self, field: str) -> List:
         """
-        Get list of input variables of trained AtmoRep-model.
+        Extract varnames from config keys: 'fields', 'fields_prediction', 'fields_targets.'
         """
-        return [var_list[0] for var_list in self.config["fields"]]
-    
-    def _get_tarvars(self) -> List:
-        """
-        Get list of target variables of trained AtmoRep-model.
-        """
-        return [var_list[0] for var_list in self.config[self.target_type]]
+        return [var_list[0] for var_list in self.config[field]]
     
     
-    def _get_token_config(self, key) -> dict:
+    def _get_token_config(self, field_type_key) -> dict:
         """
         Generic function to retrieve token configuration.
-        :param key: key-string from which token-info is deducable
-        :return dictionary of token info
+        :param key: key in config: 'fields', 'target_fields', 'fields_targets'.
         """
+        fields = self.config[field_type_key]
+        var_names = [var_list[0] for var_list in fields]
+        token_config_values = [var_list[1:] for var_list in fields]
         token_config_keys = ["general_config", "vlevel", "num_tokens", "token_shape", "bert_parameters"]
-        token_config = {var[0]: None for var in self.config[key]}        
-        for i, var in enumerate(token_config):
-            len_config = len(self.config[key][i])
-            token_config[var] =  {config_key: self.config[key][i][j+1] for j, config_key in enumerate(token_config_keys)}
+        
+        token_config = {var_name: dict() for var_name in var_names}
+        
+        for var_name, config in product(
+            var_names,
+            zip(token_config_keys, token_config_values)
+        ):
+            key, value = config
+            token_config[var_name][key] = value
         
         return token_config
     
@@ -126,11 +128,20 @@ class HandleAtmoRepData(object):
         else:
             coords = {}
             
+        print("debug grouped_storeg[varname]:", grouped_store[varname])
+        
         da = []
-        for ip, patch in tqdm(enumerate(grouped_store[os.path.join(varname)])):    
-            coords.update({dim: grouped_store[os.path.join(varname, patch, dim)] for dim in dims})
-            da_p = xr.DataArray(grouped_store[os.path.join(varname, patch, "data")], coords=coords,                
-                                dims = ["ensemble"] + dims if data_type == "ens" else dims, name=f"{varname}_{patch.replace('=', '')}")
+        for ip, patch in tqdm(enumerate(grouped_store[varname])):    
+            coords.update(
+                {
+                    dim: grouped_store[f"{varname}/{patch}/{dim}"] for dim in dims
+                }
+            )
+            da_p = xr.DataArray(
+                grouped_store[f"{varname}/{patch}/data"], coords=coords,                
+                dims = ["ensemble"] + dims if data_type == "ens" else dims,
+                name=f"{varname}_{patch.replace('=', '')}")
+            
             da.append(da_p)
         
         # ML: This would trigger loading data into memory rather than lazy data access.
@@ -174,9 +185,11 @@ class HandleAtmoRepData(object):
         filelist = self.get_hierarchical_sorted_files(data_type, epoch)
         
         if self.config["BERT_strategy"] == "forecast":
+            print("read_one_forecast_file")
             self.read_one_file = self.read_one_forecast_file
             args = {"varname": varname, "data_type": data_type}
         elif self.config["BERT_strategy"] == "BERT":
+            print("read_one_bert_file")
             assert isinstance(kwargs.get("ml", None), int), f"Model-level ml must be an integer, but '{kwargs.get('ml', None)}' was parsed."
             self.read_one_file = self.read_one_bert_file
             args = {"varname": varname, "ml": kwargs.get("ml"), "data_type": data_type}
@@ -194,9 +207,14 @@ class HandleAtmoRepData(object):
             
         # return global data if global forecasting evaluation mode was chosen 
         # ML: preliminary approach: identification via token_overlap-attribute 
-        if self.config["BERT_strategy"] == "forecast" and self.config.get("token_overlap", False):
-            da = self.get_global_field(da)
-
+        if self.config["BERT_strategy"] == "forecast":
+            try:
+                self.config["token_overlap"]
+                da = self.get_global_field(da)
+                print("get_global_field")
+            except KeyError:
+                pass
+               
         return da
     
     @staticmethod
@@ -213,9 +231,14 @@ class HandleAtmoRepData(object):
         data_coords["lat"] = np.linspace(-90., 90., num=int(180/dy) + 1, endpoint=True)
         data_coords["lon"] = np.linspace(0, 360, num=int(360/dx), endpoint=False)  
         data_coords["datetime"] = times_unique
+        
+        shape = [len(array) for array in data_coords.values()]
 
-        da_global = xr.DataArray(np.empty(tuple(len(d) for d in data_coords.values())), 
-                                 coords=data_coords, dims=dims)
+        da_global = xr.DataArray(
+            np.empty(tuple(len(d) for d in data_coords.values())), 
+            coords=data_coords,
+            dims=dims
+        )
         # fill global data array 
         for da in da_list:
             da_global.loc[{"datetime": da["datetime"], "lat": da["lat"], "lon": da["lon"]}] = da
