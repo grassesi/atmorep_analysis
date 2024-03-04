@@ -28,7 +28,7 @@ import cartopy
 import cartopy.crs as ccrs  #https://scitools.org.uk/cartopy/docs/latest/installing.html
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import cartopy.feature as cfeature
-from analysis.utils.utils import get_units
+from atmorep_analysis.utils.utils import get_units
 # auxiliary variable for logger
 module_name = os.path.basename(__file__).rstrip(".py")
 

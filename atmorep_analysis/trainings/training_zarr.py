@@ -24,10 +24,10 @@ import calendar
 import random
 import os
 
-from utils.metrics import Scores, calc_scores_item
-from utils.plotter import Plotter
-from utils.read_atmorep_data import HandleAtmoRepData
-from trainings.training_utils import *
+from atmorep_analysis.utils.metrics import Scores, calc_scores_item
+from atmorep_analysis.utils.plotter import Plotter
+from atmorep_analysis.utils.read_atmorep_data import HandleAtmoRepData
+from atmorep_analysis.trainings.training_utils import *
 
 model_id  = 'idmi4tsq5d' 
 input_dir = "/p/scratch/atmo-rep/results/"

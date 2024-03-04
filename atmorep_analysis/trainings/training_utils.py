@@ -25,8 +25,8 @@ import calendar
 import random
 import os
 
-from utils.plotter import Plotter
-from utils.read_atmorep_data import HandleAtmoRepData
+from atmorep_analysis.utils.plotter import Plotter
+from atmorep_analysis.utils.read_atmorep_data import HandleAtmoRepData
 
 def inspect_token_variables(data, name, plotter, label = "_"):
     print("Info:: Plotting along local time-step dimension: e.g. t=0,1,2..")

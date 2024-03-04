@@ -17,7 +17,7 @@ import cartopy.crs as ccrs  #https://scitools.org.uk/cartopy/docs/latest/install
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import cartopy.feature as cfeature
 
-from utils.utils import get_units, field_full_name
+from atmorep_analysis.utils.utils import get_units, field_full_name
 
 class Plotter(object):
     """

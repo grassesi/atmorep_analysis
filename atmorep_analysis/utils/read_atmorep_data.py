@@ -56,7 +56,7 @@ class HandleAtmoRepData:
         self._results_dir = results_dir
 
         
-    def _get_config(self) -> (str, dict):
+    def _get_config(self) -> tuple[str, dict]:
         """
         Get configuration dictionary of trained AtmoRep-model.
         """
@@ -221,7 +221,7 @@ class HandleAtmoRepData:
     def get_global_field(da_list):
         
         # get unique time stamps
-        times_unique = list(set([time for da in da_list for time in da["datetime"].values]))
+        times_unique = set([time for da in da_list for time in da["datetime"].values])
         dx, dy = np.abs(da_list[0]["lon"][1] - da_list[0]["lon"][0]), \
                  np.abs(da_list[0]["lat"][1] - da_list[0]["lat"][0])
         
@@ -230,7 +230,7 @@ class HandleAtmoRepData:
         data_coords = {k: v for k, v in da_list[0].coords.items() if k not in ["lat", "lon"]}
         data_coords["lat"] = np.linspace(-90., 90., num=int(180/dy) + 1, endpoint=True)
         data_coords["lon"] = np.linspace(0, 360, num=int(360/dx), endpoint=False)  
-        data_coords["datetime"] = times_unique
+        data_coords["datetime"] = sorted(times_unique)
         
         shape = [len(array) for array in data_coords.values()]
 

@@ -21,8 +21,8 @@ import cartopy.crs as ccrs  #https://scitools.org.uk/cartopy/docs/latest/install
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import cartopy.feature as cfeature
 
-from attention_utils import HandleAtmoRepAttention
-from utils.utils import shape_from_str, grib_index
+from atmorep_analysis.attention.attention_utils import HandleAtmoRepAttention
+from atmorep_analysis.utils.utils import shape_from_str, grib_index
 
 base_dir     = '/p/scratch/atmo-rep/results/'
 #model_id     = 'ehsjzkbh' #big run

@@ -24,10 +24,10 @@ import calendar
 import random
 import os
 
-from utils.metrics import Scores, calc_scores_item
-from utils.plotter import Plotter
-from utils.read_atmorep_data import HandleAtmoRepData
-from utils.utils import get_pl_level, grib_index
+from atmorep_analysis.utils.metrics import Scores, calc_scores_item
+from atmorep_analysis.utils.plotter import Plotter
+from atmorep_analysis.utils.read_atmorep_data import HandleAtmoRepData
+from atmorep_analysis.utils.utils import get_pl_level, grib_index
 
 models_id  = {
 #     '1arfi1oi': '12 step -> 6h - no fine-tuning - Paper',

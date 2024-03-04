@@ -22,8 +22,8 @@ import cartopy.crs as ccrs  #https://scitools.org.uk/cartopy/docs/latest/install
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import cartopy.feature as cfeature
 
-from utils.utils import shape_from_str, grib_index
-from utils.read_atmorep_data import HandleAtmoRepData
+from atmorep_analysis.utils.utils import shape_from_str, grib_index
+from atmorep_analysis.utils.read_atmorep_data import HandleAtmoRepData
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 class HandleAtmoRepAttention(object):
