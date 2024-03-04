@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "atmorep_analysis"
+authors = [
+    {name = "Ilaria Luise", email = "ilaria.luise@cern.ch"},
+]
+description = "example scripts for each atmorep downstream application"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "ecmwflibs",
+    "cfgrib",
+    "netcdf4",
+    "xarray",
+    "matplotlib",
+    "opencv-python",
+    "cartopy",
+    "tqdm",
+]
+version = "0.1.0"
