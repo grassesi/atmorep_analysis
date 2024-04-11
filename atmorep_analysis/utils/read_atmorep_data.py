@@ -7,6 +7,7 @@ import numpy as np
 import xarray as xr
 from pathlib import Path
 from itertools import product
+import warnings
 
 class HandleAtmoRepData:
     """
@@ -137,10 +138,13 @@ class HandleAtmoRepData:
                     dim: grouped_store[f"{varname}/{patch}/{dim}"] for dim in dims
                 }
             )
-            da_p = xr.DataArray(
-                grouped_store[f"{varname}/{patch}/data"], coords=coords,                
-                dims = ["ensemble"] + dims if data_type == "ens" else dims,
-                name=f"{varname}_{patch.replace('=', '')}")
+            
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                da_p = xr.DataArray(
+                    grouped_store[f"{varname}/{patch}/data"], coords=coords,                
+                    dims = ["ensemble"] + dims if data_type == "ens" else dims,
+                    name=f"{varname}_{patch.replace('=', '')}")
             
             da.append(da_p)
         
